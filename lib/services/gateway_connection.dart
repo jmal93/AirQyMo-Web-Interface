@@ -14,7 +14,8 @@ class GatewayConnection {
   Future<void> connect() async {
     client = MqttBrowserClient(server, clientId);
     client!.port = 8080;
-    client!.onDisconnected = onDisconnected;
+    client!.onDisconnected = _onDisconnected;
+    client!.onSubscribed = _onSubscribed;
     client!.logging(on: true);
 
     try {
@@ -31,11 +32,32 @@ class GatewayConnection {
     }
   }
 
+  Future<void> subscribe(String topic) async {
+    try {
+      client!.subscribe(topic, MqttQos.atMostOnce);
+      client!.updates!.listen(_onMessage);
+    } catch (e) {
+      print('Erro na inscrição: $e');
+    }
+  }
+
+  void _onSubscribed(String topic) {
+    print('Se inscreveu no tópico $topic');
+  }
+
   void disconnect() {
     client!.disconnect();
   }
 
-  void onDisconnected() {
+  void _onDisconnected() {
     print('Desconectado do broker');
+  }
+
+  void _onMessage(List<MqttReceivedMessage<MqttMessage>> event) {
+    final MqttPublishMessage recMess = event[0].payload as MqttPublishMessage;
+    final String message = MqttPublishPayload.bytesToStringAsString(
+      recMess.payload.message,
+    );
+    print('mensagem recebida: $message');
   }
 }

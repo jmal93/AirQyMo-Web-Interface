@@ -7,6 +7,7 @@ class HomePageView extends StatelessWidget {
   final mqttManager = GatewayConnection();
   void connect() async {
     await mqttManager.connect();
+    mqttManager.subscribe('dados/saude');
   }
 
   @override
